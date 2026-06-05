@@ -58,6 +58,7 @@ export default function MapView({
   initialCenter,
   myLocation,
   start,
+  via,
   dest,
   routes,
   selectedIndex,
@@ -114,6 +115,23 @@ export default function MapView({
         />
       ))}
 
+      {via && (
+        <AdvancedMarker
+          position={via}
+          draggable
+          zIndex={20}
+          onDragEnd={(e) => {
+            const ll = latLngFromEvent(e)
+            if (ll) onMarkerDrag('via', ll)
+          }}
+        >
+          <div className="map-pin c">
+            <div className="head">
+              <span>C</span>
+            </div>
+          </div>
+        </AdvancedMarker>
+      )}
       {start && (
         <AdvancedMarker
           position={start}

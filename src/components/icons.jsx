@@ -71,6 +71,11 @@ export const IconSliders = (p) => (
     <circle cx="8" cy="16" r="2.2" />
   </Ic>
 )
+export const IconChevronLeft = (p) => (
+  <Ic {...p}>
+    <path d="M15 18l-6-6 6-6" />
+  </Ic>
+)
 export const IconRunner = (p) => (
   <Ic {...p} sw={1.8}>
     <circle cx="15.5" cy="5" r="1.8" />

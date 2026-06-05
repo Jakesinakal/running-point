@@ -158,16 +158,89 @@ body {
   inset: 0;
 }
 
-/* Floating search */
-.search-stack {
+/* Collapsed search bar — satu baris di atas peta */
+.collapsed-bar {
   position: absolute;
   top: 12px;
   left: 16px;
   right: 16px;
   z-index: 40;
+  height: 50px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-field);
+  box-shadow: var(--shadow-md);
   display: flex;
-  flex-direction: column;
-  gap: 9px;
+  align-items: center;
+  padding: 0 14px;
+  gap: 10px;
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease);
+  user-select: none;
+}
+.collapsed-bar:hover:not(.loading) {
+  border-color: var(--accent);
+}
+.collapsed-bar.loading {
+  cursor: default;
+  color: var(--text-2);
+  font-size: 13.5px;
+  gap: 10px;
+}
+.cb-placeholder {
+  font-size: 14.5px;
+  color: var(--text-3);
+}
+.cb-route {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+}
+.cb-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.cb-dot.a { background: var(--accent); }
+.cb-dot.b { background: var(--danger); }
+.cb-dot.c { background: #8b5cf6; }
+.cb-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 0 1 auto;
+  max-width: 38%;
+}
+.cb-sep {
+  font-size: 11px;
+  color: var(--text-3);
+  flex: 0 0 auto;
+}
+
+/* Progress bar tipis di bawah collapsed bar saat loading */
+.map-progress-track {
+  position: absolute;
+  top: 74px;
+  left: 16px;
+  right: 16px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+  z-index: 40;
+}
+.map-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+  transition: width 0.4s var(--ease);
 }
 .search-field-shell {
   position: relative;
@@ -354,8 +427,103 @@ body {
 .map-pin.b .head {
   background: var(--danger);
 }
+.map-pin.c .head {
+  background: #8b5cf6;
+}
+.leadpin.c {
+  color: #8b5cf6;
+  background: #8b5cf6;
+}
 
-/* Bottom sheet (panel bawah; tidak menutupi logo Google di atasnya) */
+/* Dropdown pencarian — keluar dari atas peta, tidak menutupi seluruh layar */
+.search-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 48;
+}
+.search-dropdown {
+  position: absolute;
+  top: 74px;
+  left: 16px;
+  right: 16px;
+  z-index: 50;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-md);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: dropDown 0.2s var(--ease);
+}
+@keyframes dropDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Titik singgah via */
+.add-via-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  border: 1.5px dashed var(--border);
+  background: transparent;
+  color: var(--text-3);
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-left: 2px;
+  transition: all 0.18s var(--ease);
+}
+.add-via-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+  background: var(--accent-soft);
+}
+[data-theme='dark'] .add-via-btn:hover {
+  color: var(--accent);
+}
+.add-via-icon {
+  font-size: 18px;
+  font-weight: 300;
+  line-height: 1;
+  margin-top: -2px;
+}
+.via-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.via-field {
+  flex: 1;
+  min-width: 0;
+}
+.remove-via {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  color: var(--text-3);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: all 0.18s var(--ease);
+}
+.remove-via:hover {
+  background: var(--surface);
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* Bottom sheet (tetap di bawah peta; logo Google tetap terlihat) */
 .sheet {
   flex: 0 0 auto;
   position: relative;
@@ -374,24 +542,6 @@ body {
   border-radius: 3px;
   background: var(--border);
   margin: 4px auto 12px;
-}
-
-.warn {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  padding: 8px 11px;
-  border-radius: 11px;
-  font-size: 12px;
-  margin: 0 0 12px;
-}
-[data-theme='dark'] .warn {
-  color: var(--accent);
-}
-.error {
-  color: var(--danger);
-  font-size: 12.5px;
-  margin: 10px 0 0;
-  text-align: center;
 }
 
 .status-row {
@@ -449,6 +599,25 @@ body {
 .status-chip.filled .label b {
   color: var(--text);
 }
+
+.warn {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  padding: 8px 11px;
+  border-radius: 11px;
+  font-size: 12px;
+  margin: 0 0 12px;
+}
+[data-theme='dark'] .warn {
+  color: var(--accent);
+}
+.error {
+  color: var(--danger);
+  font-size: 12.5px;
+  margin: 10px 0 0;
+  text-align: center;
+}
+
 
 .target-block {
   margin-bottom: 18px;
