@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useMapsLibrary } from '@vis.gl/react-google-maps'
 import MapView from './components/MapView.jsx'
 import PlaceSearch from './components/PlaceSearch.jsx'
@@ -55,14 +55,17 @@ export default function App() {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [recenterTo, setRecenterTo] = useState(null)
   const [myLocation, setMyLocation] = useState(null)
-  const [pickMode, setPickMode] = useState(null) // null | 'start' | 'via' | 'dest'
+  const [pickMode, setPickMode] = useState(null)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [sheetExpanded, setSheetExpanded] = useState(false)
+
   const [progress, setProgress] = useState(null)
   const [loading, setLoading] = useState(false)
   const [locating, setLocating] = useState(false)
   const [error, setError] = useState('')
 
   const [initialCenter] = useState(() => readCachedLocation() || DEFAULT_CENTER)
+  const dragY = useRef(null)
 
   const routesLib = useMapsLibrary('routes')
   const ready = Boolean(routesLib)
@@ -94,6 +97,18 @@ export default function App() {
       { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
     )
   }, [])
+
+  function onHandleDown(e) {
+    dragY.current = e.touches?.[0]?.clientY ?? e.clientY
+  }
+  function onHandleUp(e) {
+    const endY = e.changedTouches?.[0]?.clientY ?? e.clientY
+    const delta = endY - (dragY.current ?? endY)
+    dragY.current = null
+    if (Math.abs(delta) < 12) { setSheetExpanded((v) => !v); return }
+    if (delta < 0) setSheetExpanded(true)
+    else setSheetExpanded(false)
+  }
 
   function handleMapClick(latlng) {
     if (!pickMode) return
@@ -135,14 +150,8 @@ export default function App() {
 
   function useMyLocation() {
     if (locating) return
-    if (!navigator.geolocation) {
-      setError('Browser tidak mendukung deteksi lokasi.')
-      return
-    }
-    setPickMode(null)
-    setLocating(true)
-    setError('')
-    setStartText('Mencari lokasi…')
+    if (!navigator.geolocation) { setError('Browser tidak mendukung deteksi lokasi.'); return }
+    setPickMode(null); setLocating(true); setError(''); setStartText('Mencari lokasi…')
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude }
@@ -168,7 +177,7 @@ export default function App() {
     setStartText(''); setDestText(''); setViaText('')
     setViaVisible(false)
     setRoutes(null); setBaselineDistance(null); setSelectedIndex(0)
-    setPickMode(null); setError('')
+    setPickMode(null); setError(''); setSheetExpanded(false)
   }
 
   async function handleSearch() {
@@ -182,7 +191,8 @@ export default function App() {
         onProgress: (current, total) => setProgress({ current, total }),
         via: via || undefined,
       })
-      setRoutes(res.routes); setBaselineDistance(res.baselineDistance); setSelectedIndex(0)
+      setRoutes(res.routes); setBaselineDistance(res.baselineDistance)
+      setSelectedIndex(0); setSheetExpanded(true)
     } catch (e) {
       setError(e.message || 'Terjadi kesalahan.')
     } finally {
@@ -234,7 +244,7 @@ export default function App() {
           onMarkerDrag={handleMarkerDrag}
         />
 
-        {/* Collapsed search bar — ketuk untuk buka/tutup dropdown */}
+        {/* Collapsed search bar */}
         <div
           className={`collapsed-bar${loading ? ' loading' : ''}`}
           onClick={() => !loading && setSearchOpen((o) => !o)}
@@ -277,7 +287,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Dropdown pencarian — keluar dari atas, tidak nutup seluruh layar */}
+        {/* Dropdown pencarian */}
         {searchOpen && (
           <>
             <div className="search-overlay" onClick={() => setSearchOpen(false)} />
@@ -356,9 +366,18 @@ export default function App() {
         )}
       </div>
 
-      {/* Bottom sheet — selalu di bawah peta */}
-      <div className="sheet">
-        <div className="sheet-handle" />
+      {/* Bottom sheet */}
+      <div
+        className="sheet"
+        style={{ height: sheetExpanded ? '62%' : '196px' }}
+      >
+        <div
+          className="sheet-handle"
+          onMouseDown={onHandleDown}
+          onMouseUp={onHandleUp}
+          onTouchStart={onHandleDown}
+          onTouchEnd={onHandleUp}
+        />
 
         {!hasKey && (
           <p className="warn">
@@ -480,13 +499,9 @@ export default function App() {
                   ))}
                 </div>
                 <div className="summary-line">
-                  <span>
-                    Target <b>{targetKm} km</b>
-                  </span>
+                  <span>Target <b>{targetKm} km</b></span>
                   <span className="sep">·</span>
-                  <span>
-                    terpendek <b>{fmtKm(baselineDistance)} km</b>
-                  </span>
+                  <span>terpendek <b>{fmtKm(baselineDistance)} km</b></span>
                   {failedExtend && (
                     <>
                       <span className="sep">·</span>
